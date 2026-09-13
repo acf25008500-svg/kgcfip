@@ -46,8 +46,6 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
             const hadAuth = localStorage.getItem('auth_token') === 'true';
             if (hadAuth) {
                 localStorage.removeItem('auth_token');
-                localStorage.removeItem('JWT_SECRET');
-                localStorage.removeItem('APITOKEN');
                 sessionStorage.setItem('auth_expired', 'true');
                 window.dispatchEvent(new CustomEvent('auth:expired'));
             }
@@ -75,20 +73,15 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
 }
 
 /**
- * 一个包装了 fetch 的函数，自动添加 Authorization header
- * 401 自愈逻辑统一在 handleResponse 中处理
+ * Auth is handled with an HttpOnly, same-origin session cookie.
  */
 const authedFetch = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
-    const token = localStorage.getItem('JWT_SECRET');
     const headers = new Headers(options.headers);
-
-    if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-    }
 
     return fetch(url, {
         ...options,
         headers,
+        credentials: 'same-origin',
     });
 };
 
@@ -123,7 +116,7 @@ export async function getSceneResults(name: string): Promise<ScanResult[]> {
     return handleResponse<ScanResult[]>(await authedFetch(`/api/results?scene=${encodeURIComponent(name)}&t=${Date.now()}`));
 }
 
-export async function login(password: string): Promise<{ success: boolean; message?: string; token?: string; apiToken?: string }> {
+export async function login(password: string): Promise<{ success: boolean; message?: string }> {
     try {
         const response = await fetch('/api/login', {
             method: 'POST',
@@ -131,10 +124,10 @@ export async function login(password: string): Promise<{ success: boolean; messa
             body: JSON.stringify({ password }),
         });
         
-        const data = await response.json().catch(() => ({})) as { token?: string; apiToken?: string; message?: string };
+        const data = await response.json().catch(() => ({})) as { message?: string };
 
         if (response.ok) {
-            return { success: true, token: data?.token, apiToken: data?.apiToken };
+            return { success: true };
         }
         
         return { success: false, message: data?.message || '登录失败' };
