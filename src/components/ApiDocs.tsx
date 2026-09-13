@@ -1,12 +1,20 @@
+import { useEffect, useState } from 'react';
 import { useToast } from './Toast';
 import { Copy, Key } from 'lucide-react';
 
-interface ApiDocsProps {
-    apiToken: string;
-}
-
-export function ApiDocs({ apiToken }: ApiDocsProps) {
+export function ApiDocs() {
     const { showToast } = useToast();
+    const [apiUrl, setApiUrl] = useState('');
+
+    useEffect(() => {
+        fetch('/api/subscription', { credentials: 'same-origin' })
+            .then(async (response) => {
+                if (!response.ok) throw new Error('Unable to load subscription URL');
+                return response.json() as Promise<{ url: string }>;
+            })
+            .then((data) => setApiUrl(data.url))
+            .catch(() => setApiUrl(''));
+    }, []);
 
     return (
         <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-8">
@@ -19,14 +27,13 @@ export function ApiDocs({ apiToken }: ApiDocsProps) {
             </p>
             <div className="flex items-center gap-2">
                 <div className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono text-gray-800 dark:text-gray-200 break-all border border-gray-200 dark:border-gray-600">
-                    {window.location.origin}/api/getips?token={apiToken || '请重新登录获取Token'}
+                    {apiUrl || '订阅地址加载失败，请重新登录'}
                 </div>
                 <button
                     onClick={() => {
-                        const url = `${window.location.origin}/api/getips?token=${apiToken}`;
-                        navigator.clipboard.writeText(url).then(() => showToast('API地址已复制', 'success'));
+                        navigator.clipboard.writeText(apiUrl).then(() => showToast('API地址已复制', 'success'));
                     }}
-                    disabled={!apiToken}
+                    disabled={!apiUrl}
                     className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm transition-colors whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                     <Copy className="w-4 h-4 mr-2" />
@@ -46,7 +53,7 @@ export function ApiDocs({ apiToken }: ApiDocsProps) {
                 示例:
             </p>
             <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    {`${window.location.origin}/api/getips?token=${apiToken || 'TOKEN'}&scene=家庭电信&latency=200&region=SJC&count=10`}
+                    {apiUrl ? `${apiUrl}&scene=家庭电信&latency=200&region=SJC&count=10` : '订阅地址加载失败，请重新登录'}
             </div>
         </div>
     );
