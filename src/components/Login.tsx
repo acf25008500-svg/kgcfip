@@ -29,12 +29,6 @@ export function Login({ onLogin }: LoginProps) {
         try {
             const result = await login(password);
             if (result.success) {
-                if (result.token) {
-                    localStorage.setItem('JWT_SECRET', result.token);
-                }
-                if (result.apiToken) {
-                    localStorage.setItem('APITOKEN', result.apiToken);
-                }
                 onLogin();
             } else {
                 setError(result.message || '密码错误');
