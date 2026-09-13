@@ -1,7 +1,8 @@
+import { createSession, sessionCookie } from './_auth';
+
 interface Env {
   LOGINPW?: string;
   JWT_SECRET?: string;
-  APITOKEN?: string;
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -19,13 +20,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     if (password === env.LOGINPW) {
-      // 密码正确，直接返回 JWT_SECRET 作为 Token（静态令牌模式）
-      // 同时返回 APITOKEN 供前端展示给用户用于公共接口调用
+      const session = await createSession(env.JWT_SECRET);
       return new Response(JSON.stringify({ 
-        success: true, 
-        token: env.JWT_SECRET,
-        apiToken: env.APITOKEN 
-      }), { headers: { 'Content-Type': 'application/json' } });
+        success: true,
+      }), { headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': sessionCookie(session),
+        'Cache-Control': 'no-store',
+      } });
     } else {
       return new Response(JSON.stringify({ success: false, message: 'Password incorrect' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
