@@ -10,7 +10,6 @@ import { ScanResult } from './utils/scanner'; import { ScannerResults } from './
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [publicApiToken, setPublicApiToken] = useState('');
   const [cfIps, setCfIps] = useState<CloudflareIps | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
@@ -20,7 +19,6 @@ function App() {
     const savedAuth = localStorage.getItem('auth_token');
     if (savedAuth === 'true') {
       setIsLoggedIn(true);
-      setPublicApiToken(localStorage.getItem('APITOKEN') || '');
     }
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system';
     if (savedTheme) setTheme(savedTheme);
@@ -66,15 +64,11 @@ function App() {
   const handleLogin = () => {
     setIsLoggedIn(true);
     localStorage.setItem('auth_token', 'true');
-    setPublicApiToken(localStorage.getItem('APITOKEN') || '');
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('auth_token');
-    localStorage.removeItem('JWT_SECRET');
-    localStorage.removeItem('APITOKEN');
-    setPublicApiToken('');
   };
 
   const toggleTheme = () => {
@@ -141,7 +135,7 @@ function App() {
 
           <SavedIpList key={refreshKey} />
 
-          <ApiDocs apiToken={publicApiToken} />
+          <ApiDocs />
         </main>
         
         <footer className="text-center mt-12 pb-8">
